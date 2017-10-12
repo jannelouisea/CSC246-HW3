@@ -6,13 +6,15 @@
 #define STR_ARR_LEN 3
 #define NUM_OF_THREADS 3
 #define THREAD0 0
-#define THREAD1 2
-#define THREAD2 1
+#define THREAD1 1
+#define THREAD2 2
 
 //////// add initialization code for condition variable here ////////
 pthread_mutex_t lock    = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond     = PTHREAD_COND_INITIALIZER;
-unsigned total          = 0;
+pthread_cond_t cond0     = PTHREAD_COND_INITIALIZER;
+pthread_cond_t cond1     = PTHREAD_COND_INITIALIZER;
+pthread_cond_t cond2     = PTHREAD_COND_INITIALIZER;
+unsigned thread          = 0;
 
 
 // Print an error message and exit on an error
@@ -24,13 +26,6 @@ void fail(char *msg) {
 // Global variable, to tell all the threads when it's time to stop.
 volatile int running = 1;
 
-void updateRunning() {
-    total++;
-    if (total >= 9) {
-        running = 0;
-    }
-}
-
 // Start routine for thread0
 void *thread0(void *arg) {
     char ** str_pt = (char **)arg;
@@ -39,8 +34,8 @@ void *thread0(void *arg) {
 
         // add code to wait
         pthread_mutex_lock(&lock);
-        while ((total % NUM_OF_THREADS) != THREAD0) {
-            pthread_cond_wait(&cond, &lock);
+        while (thread != THREAD0) {
+            pthread_cond_wait(&cond0, &lock);
         }
         pthread_mutex_unlock(&lock);
 
@@ -49,8 +44,8 @@ void *thread0(void *arg) {
         // print string in sequence.
         printf("%s\n", str_pt[i%STR_ARR_LEN]);
         i++;
-        updateRunning();
-        pthread_cond_signal(&cond);
+        thread = 2;
+        pthread_cond_signal(&cond2);
         pthread_mutex_unlock(&lock);
         //////// add condition variable synchronization here ////////
     }
@@ -66,8 +61,8 @@ void *thread1(void *arg) {
 
         // add code to wait
         pthread_mutex_lock(&lock);
-        while ((total % NUM_OF_THREADS) != THREAD1) {
-            pthread_cond_wait(&cond, &lock);
+        while (thread != THREAD1) {
+            pthread_cond_wait(&cond1, &lock);
         }
         pthread_mutex_unlock(&lock);
 
@@ -76,8 +71,8 @@ void *thread1(void *arg) {
         // print string in sequence.
         printf("%s\n", str_pt[i%STR_ARR_LEN]);
         i++;
-        updateRunning();
-        pthread_cond_signal(&cond);
+        thread = 0;
+        pthread_cond_signal(&cond0);
         pthread_mutex_unlock(&lock);
         //////// add condition variable synchronization here ////////
     }
@@ -94,8 +89,8 @@ void *thread2(void *arg) {
 
         // add code to wait
         pthread_mutex_lock(&lock);
-        while ((total % NUM_OF_THREADS) != THREAD2) {
-            pthread_cond_wait(&cond, &lock);
+        while (thread != THREAD2) {
+            pthread_cond_wait(&cond2, &lock);
         }
         pthread_mutex_unlock(&lock);
 
@@ -104,8 +99,8 @@ void *thread2(void *arg) {
         // print string in sequence.
         printf("%s\n", str_pt[i%STR_ARR_LEN]);
         i++;
-        updateRunning();
-        pthread_cond_signal(&cond);
+        thread = 1;
+        pthread_cond_signal(&cond1);
         pthread_mutex_unlock(&lock);
         //////// add condition variable synchronization here ////////
     }
