@@ -42,8 +42,10 @@ void *thread0(void *arg) {
         //////// add condition variable synchronization here ////////
         pthread_mutex_lock(&lock);
         // print string in sequence.
-        printf("%s\n", str_pt[i%STR_ARR_LEN]);
-        i++;
+        if (running) {
+            printf("%s\n", str_pt[i%STR_ARR_LEN]);
+            i++;
+        }
         thread = 2;
         pthread_cond_signal(&cond2);
         pthread_mutex_unlock(&lock);
@@ -69,8 +71,10 @@ void *thread1(void *arg) {
         //////// add condition variable synchronization here ////////
         pthread_mutex_lock(&lock);
         // print string in sequence.
-        printf("%s\n", str_pt[i%STR_ARR_LEN]);
-        i++;
+        if (running) {
+            printf("%s\n", str_pt[i%STR_ARR_LEN]);
+            i++;
+        }
         thread = 0;
         pthread_cond_signal(&cond0);
         pthread_mutex_unlock(&lock);
@@ -97,8 +101,10 @@ void *thread2(void *arg) {
         //////// add condition variable synchronization here ////////
         pthread_mutex_lock(&lock);
         // print string in sequence.
-        printf("%s\n", str_pt[i%STR_ARR_LEN]);
-        i++;
+        if (running) {
+            printf("%s\n", str_pt[i%STR_ARR_LEN]);
+            i++;
+        }
         thread = 1;
         pthread_cond_signal(&cond1);
         pthread_mutex_unlock(&lock);
