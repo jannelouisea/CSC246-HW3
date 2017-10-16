@@ -1,0 +1,30 @@
+/* jfave Janne Louise F Ave */
+
+HW 3 Questions & Answers
+========================================================================
+Problem 1
+========================================================================
+1. diff p1.c p1_modified.c
+
+   19c19
+   <   int cnt[2];
+   ---
+   >   int cnt[2+k];
+
+2.
+   1 2 3 10 11 100
+   10 11 1 2 3 100
+   10 11 100 1 2 3
+   100 1 2 3 10 11
+   100 10 11 1 2 3
+   ... there's supposed to be A LOT here....?
+========================================================================
+Problem 2
+========================================================================
+1. Run the program and report what you observe.
+   
+   When running the original version of p2.c, I observed that the greek
+   letters were not printing out in any order and that the count number
+   for the threads did not have a deviation of +/-1.
+
+

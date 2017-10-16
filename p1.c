@@ -16,7 +16,7 @@ void * loop_print(void * arg)
   int k = args[1];
   // printf("k: %d\n", k);
 
-  int cnt[2+k];
+  int cnt[2];
 
   while(j > 0)
   {
@@ -60,3 +60,4 @@ int main()
   sleep(5);
   return 0;
 }
+
