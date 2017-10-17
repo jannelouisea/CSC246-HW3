@@ -4,6 +4,7 @@
 #include<stdlib.h>
 #include<unistd.h>
 #include<math.h>
+#include<assert.h>
 
 #define lineLen 50
 
@@ -25,7 +26,7 @@ struct args {
 };
 
 // Create thread function
-void * calcMinDist(void * args) {
+void calcMinDist(void * args) {
     // localMinDist = 0
 
     // for every point in array
@@ -36,13 +37,14 @@ void * calcMinDist(void * args) {
                 // localMinDist = dist
 
     // mindistarray[idx] = localMinDist
+
 }
 
 
 int main(int argc, char *argv[])
 {
     FILE * fp;
-    char * fname;
+    char * fname = NULL;
 
     if(argv[1] != NULL) {
         fname = argv[1];
@@ -56,7 +58,7 @@ int main(int argc, char *argv[])
     ///////////////////////////////////////////////////////////////////////////
 
     int numOfPoints = 0;
-    char * line[lineLen];
+    char line[lineLen];
 
     // Get the number of points in the file
     if (fgets(line, sizeof(line), fp) != NULL) {
@@ -68,10 +70,28 @@ int main(int argc, char *argv[])
     printf("Num of points: %d\n", numOfPoints);
 
     // Allocate memory for minDists []
+    int * minDists = malloc(numOfPoints * sizeof(int));
 
     // Allocate memory for points []
+    struct point * points = malloc(numOfPoints * sizeof(struct point));
+
+    int idx = 0;
 
     // Read file until null and store points in points structure
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        char * x = strtok(line, " ");
+        char * y = strtok(0, " ");
+
+        (points + idx)->x = (int) strtol(x, NULL, 10);
+        (points + idx)->y = (int) strtol(y, NULL, 10);
+
+        idx++;
+    }
+    assert(numOfPoints == idx);
+
+    for(int i = 0; i < numOfPoints; i++) {
+        printf("(%d, %d)\n", (points + i)->x, (points + i)->y);
+    }
 
     // for every point
         // calculate minimum distance(index, pointer to points array)
