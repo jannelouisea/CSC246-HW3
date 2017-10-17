@@ -12,6 +12,7 @@
 struct point {
     int x;
     int y;
+    double mindist;
 };
 
 // Structure for args in calcMinDist function
@@ -25,18 +26,19 @@ double * minDists;
 struct point * points;
 double globalMinDist = -1;
 
+pthread_mutex_t lock    = PTHREAD_MUTEX_INITIALIZER;
+
 // Create thread function
 void *calcMinDist(void *arg) {
-    struct args * args = arg;
-    const int pidx = args->pidx;
+    const int *pidx = arg;
 
     double localMinDist = -1.0;
-    double x1, y1, x2, y2, dist2, dist = 0.0;
-    x1 = (double) (points + pidx)->x;
-    y1 = (double) (points + pidx)->y;
+    double x1, y1, x2, y2, dist2, dist;
+    x1 = (double) (points + *pidx)->x;
+    y1 = (double) (points + *pidx)->y;
 
     for (int i = 0; i < numOfPoints; i++) {
-        if (pidx == i) {
+        if (*pidx == i) {
         }
         else {
             // Distance formula d = sqrt((x2 - x1)^2 + (y2 - y1)^2)
@@ -54,17 +56,9 @@ void *calcMinDist(void *arg) {
         }
     }
 
-    printf("Min dist: %f\n", localMinDist);
-
-    // Critical Section //
-    if (globalMinDist == -1.0) {
-        globalMinDist = dist;
-    } else {
-        if (localMinDist < globalMinDist)
-            globalMinDist = dist;
-    }
-    *(minDists + pidx) = localMinDist;
-    // Critical Section //
+    pthread_mutex_lock(&lock);
+    (points + *pidx)->mindist = localMinDist;
+    pthread_mutex_unlock(&lock);
 }
 
 
@@ -94,8 +88,6 @@ int main(int argc, char *argv[])
         printf("Could not properly read file\n");
     }
 
-    printf("Num of points: %d\n", numOfPoints);
-
     // Allocate memory for minDists []
     minDists = malloc(numOfPoints * sizeof(double));
 
@@ -119,12 +111,12 @@ int main(int argc, char *argv[])
     // Handle for each thread
     pthread_t thread[numOfPoints];
 
-    for(int i = 0; i < numOfPoints; i++) {
-        struct args a;
-        a.pidx = i;
-        // calcMinDist(&a);
+    int args[numOfPoints];
 
-        if (pthread_create(thread + i, NULL, calcMinDist, &a) != 0) {
+    for(int i = 0; i < numOfPoints; i++) {
+        args[i] = i;
+
+        if (pthread_create(thread + i, NULL, calcMinDist, &args[i]) != 0) {
             fprintf(stderr, "Error: Cannot create thread %d\n", i);
             exit(1);
         }
@@ -132,22 +124,23 @@ int main(int argc, char *argv[])
 
     // Let threads run for a few seconds
     sleep(1);
-    for(int i = 0; i < numOfPoints; i++)
+    for(int i = 0; i < numOfPoints; i++) {
         pthread_join(thread[i], NULL);
+    }
 
     // Finding global min distance not in threads
-    /*
-    for(int i = 0; i < numOfPoints; i++)
+    for(int i = 0; i < numOfPoints; i++) {
+        // printf("%d (%d, %d) %f \n", i, (points + i)->x, (points + i)->y, (points+i)->mindist);
         if (globalMinDist == -1.0) {
-            globalMinDist = *(minDists + i);
+            globalMinDist = (points + i)->mindist;
         } else {
-            if (*(minDists + i) < globalMinDist)
-                globalMinDist = *(minDists + i);
+            if ((points + i)->mindist < globalMinDist)
+                globalMinDist = (points + i)->mindist;
         }
-    */
+    }
 
     for(int i = 0; i < numOfPoints; i++) {
-        if (*(minDists + i) == globalMinDist) {
+        if ((points + i)->mindist == globalMinDist) {
             printf("(%d, %d) ", (points + i)->x, (points + i)->y);
         }
     }
