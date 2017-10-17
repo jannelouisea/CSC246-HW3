@@ -11,6 +11,7 @@
 // Global variables
 // minBuffer = int *
 // min = int
+int numOfPoints;
 
 // Structure for storing points
 struct point{
@@ -20,13 +21,16 @@ struct point{
 
 // Structure for args in calcMinDist function
 struct args {
-    int numOfPoints;
-    int idx;
-    // pointer to points array
+    int pidx;           // Index of pointer to calc distance for
+    struct point * points;     // Pointer of points array
 };
 
 // Create thread function
-void calcMinDist(void * args) {
+void *calcMinDist(void *arg) {
+    struct args * args = arg;
+    int pidx = args->pidx;
+    struct point * pointsRef = args->points;
+    // printf("(%d, %d)\n", (pointsRef + pidx)->x, (pointsRef + pidx)->y);
     // localMinDist = 0
 
     // for every point in array
@@ -57,7 +61,7 @@ int main(int argc, char *argv[])
     ///////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    int numOfPoints = 0;
+    numOfPoints = 0;
     char line[lineLen];
 
     // Get the number of points in the file
@@ -90,7 +94,11 @@ int main(int argc, char *argv[])
     assert(numOfPoints == idx);
 
     for(int i = 0; i < numOfPoints; i++) {
-        printf("(%d, %d)\n", (points + i)->x, (points + i)->y);
+        struct args a;
+        a.pidx = i;
+        a.points = points;
+        calcMinDist(&a);
+        // printf("(%d, %d)\n", (points + i)->x, (points + i)->y);
     }
 
     // for every point
