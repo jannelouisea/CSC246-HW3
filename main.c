@@ -8,40 +8,63 @@
 
 #define lineLen 50
 
-// Global variables
-// minBuffer = int *
-// min = int
-int numOfPoints;
-
 // Structure for storing points
-struct point{
+struct point {
     int x;
     int y;
 };
 
 // Structure for args in calcMinDist function
 struct args {
-    int pidx;           // Index of pointer to calc distance for
-    struct point * points;     // Pointer of points array
+    int pidx;                   // Index of point in points[] to calc distance for
 };
+
+// Global variables
+int numOfPoints;
+double * minDists;
+struct point * points;
+double globalMinDist = -1;
 
 // Create thread function
 void *calcMinDist(void *arg) {
     struct args * args = arg;
-    int pidx = args->pidx;
-    struct point * pointsRef = args->points;
-    // printf("(%d, %d)\n", (pointsRef + pidx)->x, (pointsRef + pidx)->y);
-    // localMinDist = 0
+    const int pidx = args->pidx;
 
-    // for every point in array
-        // if curridx = idx {}
-        // else
-            // dist = calculate distance
-            // if dist < localMinDist
-                // localMinDist = dist
+    double localMinDist = -1.0;
+    double x1, y1, x2, y2, dist2, dist = 0.0;
+    x1 = (double) (points + pidx)->x;
+    y1 = (double) (points + pidx)->y;
 
-    // mindistarray[idx] = localMinDist
+    for (int i = 0; i < numOfPoints; i++) {
+        if (pidx == i) {
+        }
+        else {
+            // Distance formula d = sqrt((x2 - x1)^2 + (y2 - y1)^2)
+            x2 = (double) (points + i)->x;
+            y2 = (double) (points + i)->y;
+            dist2 = fabs(pow((x2 - x1), 2) + pow((y2 - y1), 2));
+            dist = sqrt(dist2);
 
+            if (localMinDist == -1.0) {
+                localMinDist = dist;
+            } else {
+                if (dist < localMinDist)
+                    localMinDist = dist;
+            }
+        }
+    }
+
+    printf("Min dist: %f\n", localMinDist);
+
+    // Critical Section //
+    if (globalMinDist == -1.0) {
+        globalMinDist = dist;
+    } else {
+        if (localMinDist < globalMinDist)
+            globalMinDist = dist;
+    }
+    *(minDists + pidx) = localMinDist;
+    // Critical Section //
 }
 
 
@@ -74,10 +97,10 @@ int main(int argc, char *argv[])
     printf("Num of points: %d\n", numOfPoints);
 
     // Allocate memory for minDists []
-    int * minDists = malloc(numOfPoints * sizeof(int));
+    minDists = malloc(numOfPoints * sizeof(double));
 
     // Allocate memory for points []
-    struct point * points = malloc(numOfPoints * sizeof(struct point));
+    points = malloc(numOfPoints * sizeof(struct point));
 
     int idx = 0;
 
@@ -93,24 +116,42 @@ int main(int argc, char *argv[])
     }
     assert(numOfPoints == idx);
 
+    // Handle for each thread
+    pthread_t thread[numOfPoints];
+
     for(int i = 0; i < numOfPoints; i++) {
         struct args a;
         a.pidx = i;
-        a.points = points;
-        calcMinDist(&a);
-        // printf("(%d, %d)\n", (points + i)->x, (points + i)->y);
+        // calcMinDist(&a);
+
+        if (pthread_create(thread + i, NULL, calcMinDist, &a) != 0) {
+            fprintf(stderr, "Error: Cannot create thread %d\n", i);
+            exit(1);
+        }
     }
 
-    // for every point
-        // calculate minimum distance(index, pointer to points array)
+    // Let threads run for a few seconds
+    sleep(1);
+    for(int i = 0; i < numOfPoints; i++)
+        pthread_join(thread[i], NULL);
 
-    // determine total min distance
+    // Finding global min distance not in threads
+    /*
+    for(int i = 0; i < numOfPoints; i++)
+        if (globalMinDist == -1.0) {
+            globalMinDist = *(minDists + i);
+        } else {
+            if (*(minDists + i) < globalMinDist)
+                globalMinDist = *(minDists + i);
+        }
+    */
 
-    // go through minimum distance array
-        // if dist = min dist
-            // print out point at that index
-
-    // print min dist
+    for(int i = 0; i < numOfPoints; i++) {
+        if (*(minDists + i) == globalMinDist) {
+            printf("(%d, %d) ", (points + i)->x, (points + i)->y);
+        }
+    }
+    printf("%.4f\n", globalMinDist);
 
     ///////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
